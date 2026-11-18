@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Customer Churn Prediction</title>
+
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <h2>ChurnAI</h2>
+
+        <nav>
+            <a href="#" class="active">Dashboard</a>
+            <a href="#add-customer">Add Customer</a>
+            <a href="#prediction">Prediction</a>
+            <a href="#records">Customer Records</a>
+        </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+
+        <header>
+            <h1>Customer Churn Dashboard</h1>
+            <p>Monitor customers and predict churn risk.</p>
+        </header>
+
+        <!-- Statistics -->
+        <section class="stats">
+
+            <div class="card">
+                <h3>Total Customers</h3>
+                <h2 id="total-customers">0</h2>
+            </div>
+
+            <div class="card">
+                <h3>Churned Customers</h3>
+                <h2 id="churned-customers">0</h2>
+            </div>
+
+            <div class="card">
+                <h3>High Risk Customers</h3>
+                <h2 id="high-risk">0</h2>
+            </div>
+
+        </section>
+
+        <!-- Add Customer -->
+        <section id="add-customer" class="section">
+            <h2>Add New Customer</h2>
+
+            <p>Enter customer details to predict churn probability.</p>
+
+            <div class="form-container" id="customer-form">
+                <!-- Customer form will be added next -->
+            </div>
+        </section>
+
+        <!-- Prediction -->
+        <section id="prediction" class="section">
+            <h2>Churn Prediction Result</h2>
+
+            <div class="prediction-card">
+                <h3 id="prediction-result">Awaiting Prediction</h3>
+                <p id="prediction-probability">Probability: --</p>
+                <p id="prediction-risk">Risk Level: --</p>
+            </div>
+        </section>
+
+        <!-- Customer Records -->
+        <section id="records" class="section">
+            <h2>Customer Records</h2>
+
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Customer ID</th>
+                            <th>Prediction</th>
+                            <th>Probability</th>
+                            <th>Risk</th>
+                        </tr>
+                    </thead>
+
+                    <tbody id="customer-table">
+                        <!-- Records will be loaded here -->
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+    </main>
+
+    <script src="script.js"></script>
+
+</body>
+</html>
