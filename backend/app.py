@@ -1,5 +1,6 @@
 from flask import Flask, jsonify, request
 from flask_cors import CORS
+import sqlite3
 
 from database import get_connection
 from model import predict_customer
@@ -118,7 +119,21 @@ def add_customer():
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+@app.route("/customers", methods=["GET"])
+def get_customers():
 
+    conn = get_connection()
+    conn.row_factory = sqlite3.Row
+
+    cursor = conn.cursor()
+
+    cursor.execute("SELECT * FROM customers ORDER BY id DESC")
+
+    customers = [dict(row) for row in cursor.fetchall()]
+
+    conn.close()
+
+    return jsonify(customers)
 
 if __name__ == "__main__":
     app.run(debug=True)
