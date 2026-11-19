@@ -5,100 +5,614 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>Customer Churn Prediction</title>
+    <title>Customer Churn Prediction System</title>
 
     <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
 
-    <!-- Sidebar -->
+    <!-- =====================================
+         SIDEBAR
+    ====================================== -->
+
     <aside class="sidebar">
-        <h2>ChurnAI</h2>
+
+        <div class="brand">
+            <h2>ChurnAI</h2>
+            <p>Customer Intelligence</p>
+        </div>
 
         <nav>
-            <a href="#" class="active">Dashboard</a>
+            <a href="#dashboard">Dashboard</a>
             <a href="#add-customer">Add Customer</a>
             <a href="#prediction">Prediction</a>
-            <a href="#records">Customer Records</a>
+            <a href="#top-churn-customers">Top 20 Customers</a>
+            <a href="#customer-records">Customer Records</a>
         </nav>
+
+        <div class="sidebar-footer">
+            <p>Customer Analytics</p>
+            <span>ML Powered System</span>
+        </div>
+
     </aside>
 
-    <!-- Main Content -->
+
+    <!-- =====================================
+         MAIN CONTENT
+    ====================================== -->
+
     <main class="main-content">
 
-        <header>
-            <h1>Customer Churn Dashboard</h1>
-            <p>Monitor customers and predict churn risk.</p>
-        </header>
 
-        <!-- Statistics -->
-        <section class="stats">
+        <!-- =====================================
+             DASHBOARD
+        ====================================== -->
 
-            <div class="card">
-                <h3>Total Customers</h3>
-                <h2 id="total-customers">0</h2>
+        <section id="dashboard">
+
+            <header class="page-header">
+
+                <div>
+                    <h1>Customer Churn Dashboard</h1>
+                    <p>Monitor customer behaviour and analyze churn risk.</p>
+                </div>
+
+                <button class="refresh-btn" onclick="refreshDashboard()">
+                    Refresh Dashboard
+                </button>
+
+            </header>
+
+
+            <!-- STATISTICS -->
+
+            <div class="stats-container">
+
+                <div class="stat-card">
+                    <p>Total Customers</p>
+                    <h2 id="total-customers">0</h2>
+                    <span>All customer records</span>
+                </div>
+
+                <div class="stat-card">
+                    <p>Churned Customers</p>
+                    <h2 id="churned-customers">0</h2>
+                    <span>Predicted to leave</span>
+                </div>
+
+                <div class="stat-card">
+                    <p>Retained Customers</p>
+                    <h2 id="retained-customers">0</h2>
+                    <span>Predicted to stay</span>
+                </div>
+
+                <div class="stat-card">
+                    <p>High Risk Customers</p>
+                    <h2 id="high-risk">0</h2>
+                    <span>High predicted risk</span>
+                </div>
+
             </div>
 
-            <div class="card">
-                <h3>Churned Customers</h3>
-                <h2 id="churned-customers">0</h2>
+
+            <!-- ANALYTICS CHARTS -->
+
+            <div class="analytics-grid">
+
+                <div class="chart-card">
+
+                    <h3>Churn Distribution</h3>
+
+                    <p>Predicted churn versus retained customers</p>
+
+                    <div class="chart-container">
+                        <canvas id="churnChart"></canvas>
+                    </div>
+
+                </div>
+
+
+                <div class="chart-card">
+
+                    <h3>Customer Risk Distribution</h3>
+
+                    <p>Distribution across risk categories</p>
+
+                    <div class="chart-container">
+                        <canvas id="riskChart"></canvas>
+                    </div>
+
+                </div>
+
+
+                <div class="chart-card">
+
+                    <h3>Contract-wise Churn Analysis</h3>
+
+                    <p>Predicted churn by contract type</p>
+
+                    <div class="chart-container">
+                        <canvas id="contractChart"></canvas>
+                    </div>
+
+                </div>
+
+
+                <div class="chart-card">
+
+                    <h3>Customer Tenure Analysis</h3>
+
+                    <p>Customers grouped by subscription duration</p>
+
+                    <div class="chart-container">
+                        <canvas id="tenureChart"></canvas>
+                    </div>
+
+                </div>
+
             </div>
 
-            <div class="card">
-                <h3>High Risk Customers</h3>
-                <h2 id="high-risk">0</h2>
-            </div>
+            <p class="data-note">
+                Analytics are based on ML predictions stored in the database.
+            </p>
 
         </section>
 
-        <!-- Add Customer -->
-        <section id="add-customer" class="section">
+
+
+        <!-- =====================================
+             ADD CUSTOMER
+        ====================================== -->
+
+        <section id="add-customer" class="content-section">
+
             <h2>Add New Customer</h2>
 
-            <p>Enter customer details to predict churn probability.</p>
+            <p class="section-description">
+                Enter customer details to generate a churn prediction.
+            </p>
 
-            <div class="form-container" id="customer-form">
-                <!-- Customer form will be added next -->
-            </div>
+
+            <form id="customer-form">
+
+                <div class="form-grid">
+
+
+                    <div class="form-group">
+                        <label>Customer Name</label>
+                        <input
+                            type="text"
+                            name="customer_name"
+                            placeholder="Enter customer name"
+                            required
+                        >
+                    </div>
+
+
+                    <div class="form-group">
+                        <label>Gender</label>
+
+                        <select name="gender" required>
+                            <option value="">Select Gender</option>
+                            <option value="Male">Male</option>
+                            <option value="Female">Female</option>
+                        </select>
+                    </div>
+
+
+                    <div class="form-group">
+                        <label>Senior Citizen</label>
+
+                        <select name="SeniorCitizen" required>
+                            <option value="">Select</option>
+                            <option value="0">No</option>
+                            <option value="1">Yes</option>
+                        </select>
+                    </div>
+
+
+                    <div class="form-group">
+                        <label>Partner</label>
+
+                        <select name="Partner" required>
+                            <option value="">Select</option>
+                            <option value="Yes">Yes</option>
+                            <option value="No">No</option>
+                        </select>
+                    </div>
+
+
+                    <div class="form-group">
+                        <label>Dependents</label>
+
+                        <select name="Dependents" required>
+                            <option value="">Select</option>
+                            <option value="Yes">Yes</option>
+                            <option value="No">No</option>
+                        </select>
+                    </div>
+
+
+                    <div class="form-group">
+                        <label>Tenure (Months)</label>
+
+                        <input
+                            type="number"
+                            name="tenure"
+                            min="0"
+                            max="72"
+                            placeholder="Example: 12"
+                            required
+                        >
+                    </div>
+
+
+                    <div class="form-group">
+                        <label>Phone Service</label>
+
+                        <select name="PhoneService" required>
+                            <option value="">Select</option>
+                            <option value="Yes">Yes</option>
+                            <option value="No">No</option>
+                        </select>
+                    </div>
+
+
+                    <div class="form-group">
+                        <label>Multiple Lines</label>
+
+                        <select name="MultipleLines" required>
+                            <option value="">Select</option>
+                            <option value="Yes">Yes</option>
+                            <option value="No">No</option>
+                            <option value="No phone service">No phone service</option>
+                        </select>
+                    </div>
+
+
+                    <div class="form-group">
+                        <label>Internet Service</label>
+
+                        <select name="InternetService" required>
+                            <option value="">Select</option>
+                            <option value="DSL">DSL</option>
+                            <option value="Fiber optic">Fiber optic</option>
+                            <option value="No">No</option>
+                        </select>
+                    </div>
+
+
+                    <div class="form-group">
+                        <label>Online Security</label>
+
+                        <select name="OnlineSecurity" required>
+                            <option value="">Select</option>
+                            <option value="Yes">Yes</option>
+                            <option value="No">No</option>
+                            <option value="No internet service">No internet service</option>
+                        </select>
+                    </div>
+
+
+                    <div class="form-group">
+                        <label>Online Backup</label>
+
+                        <select name="OnlineBackup" required>
+                            <option value="">Select</option>
+                            <option value="Yes">Yes</option>
+                            <option value="No">No</option>
+                            <option value="No internet service">No internet service</option>
+                        </select>
+                    </div>
+
+
+                    <div class="form-group">
+                        <label>Device Protection</label>
+
+                        <select name="DeviceProtection" required>
+                            <option value="">Select</option>
+                            <option value="Yes">Yes</option>
+                            <option value="No">No</option>
+                            <option value="No internet service">No internet service</option>
+                        </select>
+                    </div>
+
+
+                    <div class="form-group">
+                        <label>Tech Support</label>
+
+                        <select name="TechSupport" required>
+                            <option value="">Select</option>
+                            <option value="Yes">Yes</option>
+                            <option value="No">No</option>
+                            <option value="No internet service">No internet service</option>
+                        </select>
+                    </div>
+
+
+                    <div class="form-group">
+                        <label>Streaming TV</label>
+
+                        <select name="StreamingTV" required>
+                            <option value="">Select</option>
+                            <option value="Yes">Yes</option>
+                            <option value="No">No</option>
+                            <option value="No internet service">No internet service</option>
+                        </select>
+                    </div>
+
+
+                    <div class="form-group">
+                        <label>Streaming Movies</label>
+
+                        <select name="StreamingMovies" required>
+                            <option value="">Select</option>
+                            <option value="Yes">Yes</option>
+                            <option value="No">No</option>
+                            <option value="No internet service">No internet service</option>
+                        </select>
+                    </div>
+
+
+                    <div class="form-group">
+                        <label>Contract</label>
+
+                        <select name="Contract" required>
+                            <option value="">Select Contract</option>
+                            <option value="Month-to-month">Month-to-month</option>
+                            <option value="One year">One year</option>
+                            <option value="Two year">Two year</option>
+                        </select>
+                    </div>
+
+
+                    <div class="form-group">
+                        <label>Paperless Billing</label>
+
+                        <select name="PaperlessBilling" required>
+                            <option value="">Select</option>
+                            <option value="Yes">Yes</option>
+                            <option value="No">No</option>
+                        </select>
+                    </div>
+
+
+                    <div class="form-group">
+                        <label>Payment Method</label>
+
+                        <select name="PaymentMethod" required>
+                            <option value="">Select Payment Method</option>
+                            <option value="Electronic check">Electronic check</option>
+                            <option value="Mailed check">Mailed check</option>
+                            <option value="Bank transfer (automatic)">
+                                Bank transfer (automatic)
+                            </option>
+                            <option value="Credit card (automatic)">
+                                Credit card (automatic)
+                            </option>
+                        </select>
+                    </div>
+
+
+                    <div class="form-group">
+                        <label>Monthly Charges</label>
+
+                        <input
+                            type="number"
+                            name="MonthlyCharges"
+                            min="0"
+                            step="0.01"
+                            placeholder="Example: 75.50"
+                            required
+                        >
+                    </div>
+
+
+                    <div class="form-group">
+                        <label>Total Charges</label>
+
+                        <input
+                            type="number"
+                            name="TotalCharges"
+                            min="0"
+                            step="0.01"
+                            placeholder="Example: 900.00"
+                            required
+                        >
+                    </div>
+
+                </div>
+
+
+                <button type="submit" class="submit-btn">
+                    Predict Customer Churn
+                </button>
+
+                <p id="form-message"></p>
+
+            </form>
+
         </section>
 
-        <!-- Prediction -->
-        <section id="prediction" class="section">
+
+
+        <!-- =====================================
+             PREDICTION RESULT
+        ====================================== -->
+
+        <section id="prediction" class="content-section">
+
             <h2>Churn Prediction Result</h2>
 
+            <p class="section-description">
+                Latest prediction generated by the ML model.
+            </p>
+
             <div class="prediction-card">
-                <h3 id="prediction-result">Awaiting Prediction</h3>
-                <p id="prediction-probability">Probability: --</p>
-                <p id="prediction-risk">Risk Level: --</p>
+
+                <h3 id="prediction-result">
+                    Awaiting Prediction
+                </h3>
+
+                <div class="prediction-details">
+
+                    <div>
+                        <span>Churn Probability</span>
+                        <strong id="prediction-probability">--</strong>
+                    </div>
+
+                    <div>
+                        <span>Risk Level</span>
+                        <strong id="prediction-risk">--</strong>
+                    </div>
+
+                </div>
+
             </div>
+
         </section>
 
-        <!-- Customer Records -->
-        <section id="records" class="section">
-            <h2>Customer Records</h2>
+
+
+        <!-- =====================================
+             TOP 20 CHURN CUSTOMERS
+        ====================================== -->
+
+        <section id="top-churn-customers" class="content-section">
+
+            <h2>Top 20 Churn Risk Customers</h2>
+
+            <p class="section-description">
+                Customers with the highest predicted churn probabilities.
+            </p>
 
             <div class="table-container">
+
                 <table>
+
                     <thead>
                         <tr>
-                            <th>Customer ID</th>
-                            <th>Prediction</th>
+                            <th>ID</th>
+                            <th>Customer Name</th>
+                            <th>Contract</th>
+                            <th>Tenure</th>
                             <th>Probability</th>
                             <th>Risk</th>
                         </tr>
                     </thead>
 
-                    <tbody id="customer-table">
-                        <!-- Records will be loaded here -->
+                    <tbody id="top-churn-table">
+
+                        <tr>
+                            <td colspan="6">Loading customers...</td>
+                        </tr>
+
                     </tbody>
+
                 </table>
+
             </div>
+
         </section>
 
+
+
+        <!-- =====================================
+             CUSTOMER RECORDS
+        ====================================== -->
+
+        <section id="customer-records" class="content-section">
+
+            <h2>Customer Records</h2>
+
+            <p class="section-description">
+                Search, view and manage customer records.
+            </p>
+
+
+            <!-- SEARCH INPUT AND BUTTONS -->
+
+            <div class="search-container">
+
+                <input
+                    type="text"
+                    id="customer-search"
+                    placeholder="Enter customer name, ID, contract, tenure, risk..."
+                >
+
+                <button
+                    type="button"
+                    id="search-btn"
+                    class="search-btn"
+                >
+                    Search
+                </button>
+
+                <button
+                    type="button"
+                    id="clear-search"
+                    class="clear-btn"
+                >
+                    Clear
+                </button>
+
+            </div>
+
+
+            <p id="search-count">
+                Search for a customer to view records.
+            </p>
+
+
+            <!-- CUSTOMER TABLE -->
+
+            <div class="table-container">
+
+                <table>
+
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Customer Name</th>
+                            <th>Contract</th>
+                            <th>Tenure</th>
+                            <th>Prediction</th>
+                            <th>Probability</th>
+                            <th>Risk</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+
+                    <tbody id="customer-table">
+
+                        <tr>
+                            <td colspan="8">
+                                Search for a customer to display records.
+                            </td>
+                        </tr>
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </section>
+
+
     </main>
+
+
+    <!-- =====================================
+         EXTERNAL LIBRARY
+    ====================================== -->
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <script src="script.js"></script>
 
 </body>
+
 </html>
