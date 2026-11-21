@@ -1,668 +1,472 @@
-// ==========================================
+// =====================================================
 // CONFIGURATION
-// ==========================================
+// =====================================================
 
 const API_URL = "http://127.0.0.1:5000";
 
+let currentSearchBy = "name";
+let currentSearch = "";
+
+let currentPage = 1;
+let totalPages = 1;
+let perPage = 10;
+
 let churnChart = null;
 let riskChart = null;
-let contractChart = null;
-let tenureChart = null;
-
-let customerRecords = [];
 
 
-// ==========================================
-// 1. FETCH CUSTOMERS FROM DATABASE
-// ==========================================
+// =====================================================
+// DASHBOARD
+// =====================================================
 
-async function fetchCustomers() {
+async function loadDashboard() {
 
-    const response = await fetch(`${API_URL}/customers`);
+    try {
 
-    if (!response.ok) {
-        throw new Error("Unable to fetch customers");
+        const response = await fetch(`${API_URL}/dashboard-stats`);
+
+        if (!response.ok) {
+            throw new Error("Unable to load dashboard");
+        }
+
+        const data = await response.json();
+
+        document.getElementById("total-customers").textContent =
+            data.total_customers;
+
+        document.getElementById("churned-customers").textContent =
+            data.churned_customers;
+
+        document.getElementById("retained-customers").textContent =
+            data.retained_customers;
+
+        document.getElementById("high-risk").textContent =
+            data.high_risk_customers;
+
+
+        updateCharts(data);
+
+    } catch (error) {
+
+        console.error("Dashboard error:", error);
+
     }
 
-    return await response.json();
-
 }
 
 
-// ==========================================
-// 2. UPDATE DASHBOARD STATISTICS
-// ==========================================
+// =====================================================
+// DASHBOARD CHARTS
+// =====================================================
 
-function updateStatistics(customers) {
+function updateCharts(data) {
 
-    const total = customers.length;
+    const churnCanvas = document.getElementById("churnChart");
 
-    const churned = customers.filter(
-        customer => customer.ChurnPrediction === "Yes"
-    ).length;
-
-    const retained = customers.filter(
-        customer => customer.ChurnPrediction === "No"
-    ).length;
-
-    const highRisk = customers.filter(
-        customer => customer.RiskLevel === "High"
-    ).length;
-
-
-    document.getElementById("total-customers").textContent = total;
-
-    document.getElementById("churned-customers").textContent = churned;
-
-    document.getElementById("retained-customers").textContent = retained;
-
-    document.getElementById("high-risk").textContent = highRisk;
-
-}
-
-
-// ==========================================
-// 3. CHURN DISTRIBUTION CHART
-// ==========================================
-
-function createChurnChart(customers) {
-
-    const churned = customers.filter(
-        customer => customer.ChurnPrediction === "Yes"
-    ).length;
-
-    const retained = customers.filter(
-        customer => customer.ChurnPrediction === "No"
-    ).length;
+    const riskCanvas = document.getElementById("riskChart");
 
 
     if (churnChart) {
         churnChart.destroy();
     }
 
-
-    churnChart = new Chart(
-        document.getElementById("churnChart"),
-        {
-
-            type: "doughnut",
-
-            data: {
-
-                labels: ["Churned", "Retained"],
-
-                datasets: [{
-
-                    data: [churned, retained],
-
-                    backgroundColor: [
-                        "#9b6658",
-                        "#737f5b"
-                    ],
-
-                    borderWidth: 2,
-
-                    borderColor: "#ffffff"
-
-                }]
-
-            },
-
-            options: {
-
-                responsive: true,
-
-                maintainAspectRatio: false,
-
-                plugins: {
-
-                    legend: {
-                        position: "bottom"
-                    }
-
-                }
-
-            }
-
-        }
-    );
-
-}
-
-
-// ==========================================
-// 4. CUSTOMER RISK DISTRIBUTION CHART
-// ==========================================
-
-function createRiskChart(customers) {
-
-    const low = customers.filter(
-        customer => customer.RiskLevel === "Low"
-    ).length;
-
-    const medium = customers.filter(
-        customer => customer.RiskLevel === "Medium"
-    ).length;
-
-    const high = customers.filter(
-        customer => customer.RiskLevel === "High"
-    ).length;
-
-
     if (riskChart) {
         riskChart.destroy();
     }
 
 
-    riskChart = new Chart(
-        document.getElementById("riskChart"),
-        {
+    churnChart = new Chart(churnCanvas, {
 
-            type: "pie",
+        type: "doughnut",
 
-            data: {
+        data: {
+            labels: ["Churned", "Retained"],
 
-                labels: [
-                    "Low Risk",
-                    "Medium Risk",
-                    "High Risk"
+            datasets: [{
+                data: [
+                    data.churned_customers,
+                    data.retained_customers
                 ],
 
-                datasets: [{
-
-                    data: [low, medium, high],
-
-                    backgroundColor: [
-                        "#737f5b",
-                        "#d5b56b",
-                        "#9b6658"
-                    ]
-
-                }]
-
-            },
-
-            options: {
-
-                responsive: true,
-
-                maintainAspectRatio: false,
-
-                plugins: {
-
-                    legend: {
-                        position: "bottom"
-                    }
-
-                }
-
-            }
-
-        }
-    );
-
-}
-
-
-// ==========================================
-// 5. CONTRACT-WISE CHURN CHART
-// ==========================================
-
-function createContractChart(customers) {
-
-    const contracts = [
-        "Month-to-month",
-        "One year",
-        "Two year"
-    ];
-
-
-    const churned = contracts.map(contract => {
-
-        return customers.filter(customer =>
-
-            customer.Contract === contract &&
-            customer.ChurnPrediction === "Yes"
-
-        ).length;
-
-    });
-
-
-    const retained = contracts.map(contract => {
-
-        return customers.filter(customer =>
-
-            customer.Contract === contract &&
-            customer.ChurnPrediction === "No"
-
-        ).length;
-
-    });
-
-
-    if (contractChart) {
-        contractChart.destroy();
-    }
-
-
-    contractChart = new Chart(
-        document.getElementById("contractChart"),
-        {
-
-            type: "bar",
-
-            data: {
-
-                labels: contracts,
-
-                datasets: [
-
-                    {
-                        label: "Churned",
-                        data: churned,
-                        backgroundColor: "#9b6658"
-                    },
-
-                    {
-                        label: "Retained",
-                        data: retained,
-                        backgroundColor: "#737f5b"
-                    }
-
+                backgroundColor: [
+                    "#A66B5B",
+                    "#77835F"
                 ]
+            }]
+        },
 
-            },
-
-            options: {
-
-                responsive: true,
-
-                maintainAspectRatio: false,
-
-                scales: {
-
-                    y: {
-                        beginAtZero: true,
-
-                        ticks: {
-                            precision: 0
-                        }
-                    }
-
-                }
-
-            }
-
+        options: {
+            responsive: true,
+            maintainAspectRatio: false
         }
-    );
 
-}
-
-
-// ==========================================
-// 6. CUSTOMER TENURE ANALYSIS CHART
-// ==========================================
-
-function createTenureChart(customers) {
-
-    const labels = [
-        "0–12 Months",
-        "13–24 Months",
-        "25–36 Months",
-        "37–48 Months",
-        "49–60 Months",
-        "61–72 Months"
-    ];
+    });
 
 
-    const counts = [
+    const risk = data.risk_distribution;
 
-        customers.filter(
-            customer => customer.tenure >= 0 &&
-                        customer.tenure <= 12
-        ).length,
+    riskChart = new Chart(riskCanvas, {
 
-        customers.filter(
-            customer => customer.tenure >= 13 &&
-                        customer.tenure <= 24
-        ).length,
+        type: "pie",
 
-        customers.filter(
-            customer => customer.tenure >= 25 &&
-                        customer.tenure <= 36
-        ).length,
+        data: {
+            labels: ["Low Risk", "Medium Risk", "High Risk"],
 
-        customers.filter(
-            customer => customer.tenure >= 37 &&
-                        customer.tenure <= 48
-        ).length,
+            datasets: [{
+                data: [
+                    risk.Low,
+                    risk.Medium,
+                    risk.High
+                ],
 
-        customers.filter(
-            customer => customer.tenure >= 49 &&
-                        customer.tenure <= 60
-        ).length,
+                backgroundColor: [
+                    "#77835F",
+                    "#D8B76B",
+                    "#A66B5B"
+                ]
+            }]
+        },
 
-        customers.filter(
-            customer => customer.tenure >= 61 &&
-                        customer.tenure <= 72
-        ).length
-
-    ];
-
-
-    if (tenureChart) {
-        tenureChart.destroy();
-    }
-
-
-    tenureChart = new Chart(
-        document.getElementById("tenureChart"),
-        {
-
-            type: "bar",
-
-            data: {
-
-                labels: labels,
-
-                datasets: [{
-
-                    label: "Customers",
-
-                    data: counts,
-
-                    backgroundColor: "#737f5b",
-
-                    borderRadius: 5
-
-                }]
-
-            },
-
-            options: {
-
-                responsive: true,
-
-                maintainAspectRatio: false,
-
-                scales: {
-
-                    y: {
-                        beginAtZero: true,
-
-                        ticks: {
-                            precision: 0
-                        }
-                    }
-
-                },
-
-                plugins: {
-
-                    legend: {
-                        display: false
-                    }
-
-                }
-
-            }
-
+        options: {
+            responsive: true,
+            maintainAspectRatio: false
         }
-    );
-
-}
-
-
-// ==========================================
-// 7. TOP 20 CHURN CUSTOMERS
-// ==========================================
-
-function loadTopChurnCustomers(customers) {
-
-    const table = document.getElementById("top-churn-table");
-
-    table.innerHTML = "";
-
-
-    const topCustomers = customers
-
-        .filter(customer => customer.ChurnPrediction === "Yes")
-
-        .sort((a, b) => {
-
-            return Number(b.ChurnProbability) -
-                   Number(a.ChurnProbability);
-
-        })
-
-        .slice(0, 20);
-
-
-    if (topCustomers.length === 0) {
-
-        table.innerHTML = `
-            <tr>
-                <td colspan="6">
-                    No churn-risk customers found.
-                </td>
-            </tr>
-        `;
-
-        return;
-
-    }
-
-
-    topCustomers.forEach(customer => {
-
-        const row = document.createElement("tr");
-
-
-        const values = [
-
-            customer.id,
-
-            customer.customer_name,
-
-            customer.Contract,
-
-            `${customer.tenure} months`,
-
-            `${customer.ChurnProbability}%`,
-
-            customer.RiskLevel
-
-        ];
-
-
-        values.forEach(value => {
-
-            const cell = document.createElement("td");
-
-            cell.textContent = value ?? "";
-
-            row.appendChild(cell);
-
-        });
-
-
-        table.appendChild(row);
 
     });
 
 }
 
 
-// ==========================================
-// 8. DISPLAY CUSTOMER RECORDS
-// ==========================================
+// =====================================================
+// REFRESH DASHBOARD
+// =====================================================
 
-function loadCustomerTable(customers) {
+async function refreshDashboard() {
 
-    const table = document.getElementById("customer-table");
+    await loadDashboard();
 
-    table.innerHTML = "";
+    await loadTopCustomers();
 
-
-    if (customers.length === 0) {
-
-        table.innerHTML = `
-            <tr>
-                <td colspan="8">
-                    No matching customers found.
-                </td>
-            </tr>
-        `;
-
-        return;
-
-    }
-
-
-    customers.forEach(customer => {
-
-        const row = document.createElement("tr");
-
-
-        const values = [
-
-            customer.id,
-
-            customer.customer_name,
-
-            customer.Contract,
-
-            `${customer.tenure} months`,
-
-            customer.ChurnPrediction,
-
-            `${customer.ChurnProbability}%`,
-
-            customer.RiskLevel
-
-        ];
-
-
-        values.forEach(value => {
-
-            const cell = document.createElement("td");
-
-            cell.textContent = value ?? "";
-
-            row.appendChild(cell);
-
-        });
-
-
-        // DELETE BUTTON
-
-        const actionCell = document.createElement("td");
-
-        const deleteButton = document.createElement("button");
-
-        deleteButton.textContent = "Delete";
-
-        deleteButton.className = "delete-btn";
-
-
-        deleteButton.addEventListener("click", () => {
-
-            deleteCustomer(customer.id);
-
-        });
-
-
-        actionCell.appendChild(deleteButton);
-
-        row.appendChild(actionCell);
-
-        table.appendChild(row);
-
-    });
+    await loadCustomerRecords(currentPage);
 
 }
 
 
-// ==========================================
-// 9. CUSTOMER SEARCH
-// ==========================================
+// =====================================================
+// TOP 20 CUSTOMERS
+// =====================================================
 
-function searchCustomers() {
+async function loadTopCustomers() {
 
-    const input = document.getElementById("customer-search");
+    try {
 
-    const query = input.value.trim().toLowerCase();
+        const response = await fetch(`${API_URL}/top-customers`);
 
-    const count = document.getElementById("search-count");
+        const customers = await response.json();
+
+        const table = document.getElementById("top-customers-table");
+
+        table.innerHTML = "";
+
+        if (customers.length === 0) {
+
+            table.innerHTML = `
+                <tr>
+                    <td colspan="6">No churn customers found.</td>
+                </tr>
+            `;
+
+            return;
+        }
 
 
-    if (!query) {
+        customers.forEach(customer => {
 
-        document.getElementById("customer-table").innerHTML = `
-            <tr>
-                <td colspan="8">
-                    Please enter a search value.
+            const row = document.createElement("tr");
+
+            row.innerHTML = `
+                <td>${customer.id}</td>
+                <td>${escapeHTML(customer.customer_name)}</td>
+                <td>${escapeHTML(customer.Contract)}</td>
+                <td>${customer.tenure} months</td>
+                <td>${customer.ChurnProbability}%</td>
+                <td class="${getRiskClass(customer.RiskLevel)}">
+                    ${escapeHTML(customer.RiskLevel)}
                 </td>
-            </tr>
-        `;
+            `;
 
-        count.textContent = "Enter a customer detail to search.";
-
-        return;
-
-    }
-
-
-    const filteredCustomers = customerRecords.filter(customer => {
-
-        return Object.values(customer).some(value => {
-
-            return String(value ?? "")
-                .toLowerCase()
-                .includes(query);
+            table.appendChild(row);
 
         });
 
-    });
+    } catch (error) {
 
+        console.error("Top customers error:", error);
 
-    loadCustomerTable(filteredCustomers);
-
-
-    count.textContent =
-        `Found ${filteredCustomers.length} matching customer(s).`;
+    }
 
 }
 
 
-// ==========================================
-// 10. CLEAR SEARCH
-// ==========================================
+// =====================================================
+// CUSTOMER SEARCH
+// =====================================================
 
-function clearSearch() {
+async function loadCustomerRecords(page = 1) {
+
+    currentPage = page;
+
+    perPage = Number(document.getElementById("per-page").value);
+
+    try {
+
+        const params = new URLSearchParams({
+
+            search: currentSearch,
+
+            search_by: currentSearchBy,
+
+            page: currentPage,
+
+            per_page: perPage
+
+        });
+
+
+        const response = await fetch(
+            `${API_URL}/customers/search?${params}`
+        );
+
+        if (!response.ok) {
+            throw new Error("Unable to load customer records");
+        }
+
+        const data = await response.json();
+
+        const table = document.getElementById("customer-table");
+
+        table.innerHTML = "";
+
+        totalPages = data.total_pages;
+
+
+        document.getElementById("records-info").textContent =
+            `Showing ${data.customers.length} of ${data.total} matching customers`;
+
+
+        document.getElementById("page-info").textContent =
+            `Page ${currentPage} of ${totalPages || 1}`;
+
+
+        document.getElementById("previous-btn").disabled =
+            currentPage <= 1;
+
+        document.getElementById("next-btn").disabled =
+            currentPage >= totalPages;
+
+
+        if (data.customers.length === 0) {
+
+            table.innerHTML = `
+                <tr>
+                    <td colspan="8">No matching customers found.</td>
+                </tr>
+            `;
+
+            return;
+        }
+
+
+        data.customers.forEach(customer => {
+
+            const row = document.createElement("tr");
+
+            row.innerHTML = `
+
+                <td>${customer.id}</td>
+
+                <td>${escapeHTML(customer.customer_name)}</td>
+
+                <td>${escapeHTML(customer.Contract)}</td>
+
+                <td>${customer.tenure} months</td>
+
+                <td class="${getPredictionClass(customer.ChurnPrediction)}">
+                    ${escapeHTML(customer.ChurnPrediction)}
+                </td>
+
+                <td>${customer.ChurnProbability}%</td>
+
+                <td class="${getRiskClass(customer.RiskLevel)}">
+                    ${escapeHTML(customer.RiskLevel)}
+                </td>
+
+                <td>
+                    <button
+                        class="delete-btn"
+                        onclick="deleteCustomer(${customer.id})">
+                        Delete
+                    </button>
+                </td>
+
+            `;
+
+            table.appendChild(row);
+
+        });
+
+    } catch (error) {
+
+        console.error("Customer records error:", error);
+
+        document.getElementById("records-info").textContent =
+            "Unable to load customer records.";
+
+    }
+
+}
+
+
+// =====================================================
+// SEARCH CATEGORY BUTTONS
+// =====================================================
+
+document.querySelectorAll(".search-option").forEach(button => {
+
+    button.addEventListener("click", function() {
+
+        document.querySelectorAll(".search-option").forEach(option => {
+
+            option.classList.remove("active");
+
+        });
+
+        this.classList.add("active");
+
+        currentSearchBy = this.dataset.search;
+
+        const input = document.getElementById("customer-search");
+
+        const placeholders = {
+
+            name: "Enter customer name...",
+
+            id: "Enter customer ID...",
+
+            contract: "Enter contract: Month-to-month, One year, Two year...",
+
+            risk: "Enter risk: Low, Medium, High...",
+
+            all: "Search across all available fields..."
+
+        };
+
+        input.placeholder = placeholders[currentSearchBy];
+
+        input.value = "";
+
+        currentSearch = "";
+
+        loadCustomerRecords(1);
+
+    });
+
+});
+
+
+// =====================================================
+// SEARCH BUTTON
+// =====================================================
+
+document.getElementById("search-btn").addEventListener("click", function() {
+
+    currentSearch = document.getElementById("customer-search").value.trim();
+
+    loadCustomerRecords(1);
+
+});
+
+
+// =====================================================
+// ENTER KEY SEARCH
+// =====================================================
+
+document.getElementById("customer-search").addEventListener("keydown", function(event) {
+
+    if (event.key === "Enter") {
+
+        currentSearch = this.value.trim();
+
+        loadCustomerRecords(1);
+
+    }
+
+});
+
+
+// =====================================================
+// CLEAR SEARCH
+// =====================================================
+
+document.getElementById("clear-search-btn").addEventListener("click", function() {
 
     document.getElementById("customer-search").value = "";
 
+    currentSearch = "";
 
-    document.getElementById("customer-table").innerHTML = `
-        <tr>
-            <td colspan="8">
-                Search for a customer to display records.
-            </td>
-        </tr>
-    `;
+    currentPage = 1;
 
+    loadCustomerRecords(1);
 
-    document.getElementById("search-count").textContent =
-        "Search for a customer to view records.";
-
-}
+});
 
 
-// ==========================================
-// 11. DELETE CUSTOMER
-// ==========================================
+// =====================================================
+// RECORDS PER PAGE
+// =====================================================
+
+document.getElementById("per-page").addEventListener("change", function() {
+
+    perPage = Number(this.value);
+
+    loadCustomerRecords(1);
+
+});
+
+
+// =====================================================
+// PREVIOUS PAGE
+// =====================================================
+
+document.getElementById("previous-btn").addEventListener("click", function() {
+
+    if (currentPage > 1) {
+
+        loadCustomerRecords(currentPage - 1);
+
+    }
+
+});
+
+
+// =====================================================
+// NEXT PAGE
+// =====================================================
+
+document.getElementById("next-btn").addEventListener("click", function() {
+
+    if (currentPage < totalPages) {
+
+        loadCustomerRecords(currentPage + 1);
+
+    }
+
+});
+
+
+// =====================================================
+// DELETE CUSTOMER
+// =====================================================
 
 async function deleteCustomer(customerId) {
 
@@ -670,11 +474,9 @@ async function deleteCustomer(customerId) {
         `Are you sure you want to delete customer ID ${customerId}?`
     );
 
-
     if (!confirmation) {
         return;
     }
-
 
     try {
 
@@ -685,279 +487,176 @@ async function deleteCustomer(customerId) {
             }
         );
 
+        const result = await response.json();
+
+        if (!response.ok) {
+
+            alert(result.error || "Unable to delete customer");
+
+            return;
+
+        }
+
+        alert("Customer deleted successfully!");
+
+        await refreshDashboard();
+
+    } catch (error) {
+
+        console.error("Delete error:", error);
+
+        alert("Something went wrong while deleting the customer.");
+
+    }
+
+}
+
+
+// =====================================================
+// ADD CUSTOMER AND PREDICT
+// =====================================================
+
+document.getElementById("customer-form").addEventListener("submit", async function(event) {
+
+    event.preventDefault();
+
+    const form = event.target;
+
+    const formData = new FormData(form);
+
+    const customer = Object.fromEntries(formData.entries());
+
+
+    customer.SeniorCitizen = Number(customer.SeniorCitizen);
+
+    customer.tenure = Number(customer.tenure);
+
+    customer.MonthlyCharges = Number(customer.MonthlyCharges);
+
+    customer.TotalCharges = Number(customer.TotalCharges);
+
+
+    try {
+
+        const response = await fetch(`${API_URL}/add-customer`, {
+
+            method: "POST",
+
+            headers: {
+                "Content-Type": "application/json"
+            },
+
+            body: JSON.stringify(customer)
+
+        });
+
 
         const result = await response.json();
 
 
         if (!response.ok) {
 
-            throw new Error(
-                result.error || "Unable to delete customer"
-            );
+            alert(result.error || "Unable to add customer");
+
+            return;
 
         }
 
 
-        alert("Customer deleted successfully!");
+        document.getElementById("prediction-result").textContent =
+            result.prediction === "Yes"
+                ? "Customer Likely to Churn"
+                : "Customer Likely to Stay";
 
 
-        // Reload database information
+        document.getElementById("prediction-probability").textContent =
+            result.probability + "%";
+
+
+        document.getElementById("prediction-risk").textContent =
+            result.risk;
+
+
+        alert("Customer added and prediction generated successfully!");
+
+
+        form.reset();
 
         await refreshDashboard();
 
+        document.getElementById("prediction").scrollIntoView({
+            behavior: "smooth"
+        });
+
+
+    } catch (error) {
+
+        console.error("Prediction error:", error);
+
+        alert("Unable to connect to the backend.");
+
     }
 
-    catch (error) {
+});
 
-        console.error("Delete error:", error);
 
-        alert(error.message);
+// =====================================================
+// HELPER FUNCTIONS
+// =====================================================
 
+function getRiskClass(risk) {
+
+    if (risk === "High") {
+        return "risk-high";
     }
+
+    if (risk === "Medium") {
+        return "risk-medium";
+    }
+
+    return "risk-low";
 
 }
 
 
-// ==========================================
-// 12. REFRESH DASHBOARD
-// ==========================================
+function getPredictionClass(prediction) {
 
-async function refreshDashboard() {
-
-    try {
-
-        const customers = await fetchCustomers();
-
-        customerRecords = customers;
-
-
-        // Update statistics
-
-        updateStatistics(customers);
-
-
-        // Update charts
-
-        createChurnChart(customers);
-
-        createRiskChart(customers);
-
-        createContractChart(customers);
-
-        createTenureChart(customers);
-
-
-        // Update Top 20 customers
-
-        loadTopChurnCustomers(customers);
-
-
-        // Keep Customer Records empty until searched
-
-        clearSearch();
-
-
-        console.log("Dashboard refreshed successfully");
-
-    }
-
-    catch (error) {
-
-        console.error("Dashboard error:", error);
-
-    }
+    return prediction === "Yes"
+        ? "prediction-yes"
+        : "prediction-no";
 
 }
 
 
-// ==========================================
-// 13. DISPLAY PREDICTION RESULT
-// ==========================================
+function escapeHTML(value) {
 
-function displayPrediction(data) {
+    return String(value ?? "").replace(/[&<>"']/g, character => {
 
-    document.getElementById("prediction-result").textContent =
+        const entities = {
+            "&": "&amp;",
+            "<": "&lt;",
+            ">": "&gt;",
+            '"': "&quot;",
+            "'": "&#39;"
+        };
 
-        data.prediction === "Yes"
-            ? "Customer Likely to Churn"
-            : "Customer Likely to Stay";
+        return entities[character];
 
-
-    document.getElementById("prediction-probability").textContent =
-
-        `${data.probability}%`;
-
-
-    document.getElementById("prediction-risk").textContent =
-
-        data.risk;
+    });
 
 }
 
 
-// ==========================================
-// 14. ADD CUSTOMER FORM
-// ==========================================
+// =====================================================
+// INITIAL PAGE LOAD
+// =====================================================
 
-document.getElementById("customer-form").addEventListener(
-    "submit",
-    async function(event) {
+document.addEventListener("DOMContentLoaded", async function() {
 
-        event.preventDefault();
+    await loadDashboard();
 
+    await loadTopCustomers();
 
-        const form = event.target;
-
-        const message = document.getElementById("form-message");
-
-        const button = form.querySelector(
-            'button[type="submit"]'
-        );
-
-
-        const formData = new FormData(form);
-
-        const customerData = Object.fromEntries(
-            formData.entries()
-        );
-
-
-        // Convert numeric fields
-
-        customerData.SeniorCitizen =
-            Number(customerData.SeniorCitizen);
-
-        customerData.tenure =
-            Number(customerData.tenure);
-
-        customerData.MonthlyCharges =
-            Number(customerData.MonthlyCharges);
-
-        customerData.TotalCharges =
-            Number(customerData.TotalCharges);
-
-
-        try {
-
-            button.disabled = true;
-
-            button.textContent = "Processing...";
-
-            message.textContent = "Generating prediction...";
-
-
-            const response = await fetch(
-                `${API_URL}/add-customer`,
-                {
-
-                    method: "POST",
-
-                    headers: {
-                        "Content-Type": "application/json"
-                    },
-
-                    body: JSON.stringify(customerData)
-
-                }
-            );
-
-
-            const result = await response.json();
-
-
-            if (!response.ok) {
-
-                throw new Error(
-                    result.error ||
-                    result.message ||
-                    "Customer submission failed"
-                );
-
-            }
-
-
-            // Display prediction
-
-            displayPrediction(result);
-
-
-            message.textContent =
-                "Customer added successfully!";
-
-
-            // Reset form
-
-            form.reset();
-
-
-            // Refresh dashboard
-
-            await refreshDashboard();
-
-        }
-
-        catch (error) {
-
-            console.error("Submission error:", error);
-
-            message.textContent = error.message;
-
-        }
-
-        finally {
-
-            button.disabled = false;
-
-            button.textContent = "Predict Customer Churn";
-
-        }
-
-    }
-
-);
-
-
-// ==========================================
-// 15. INITIALIZE APPLICATION
-// ==========================================
-
-document.addEventListener("DOMContentLoaded", () => {
-
-
-    // Search button
-
-    document.getElementById("search-btn").addEventListener(
-        "click",
-        searchCustomers
-    );
-
-
-    // Press Enter to search
-
-    document.getElementById("customer-search").addEventListener(
-        "keydown",
-        function(event) {
-
-            if (event.key === "Enter") {
-
-                searchCustomers();
-
-            }
-
-        }
-    );
-
-
-    // Clear button
-
-    document.getElementById("clear-search").addEventListener(
-        "click",
-        clearSearch
-    );
-
-
-    // Load dashboard
-
-    refreshDashboard();
+    await loadCustomerRecords(1);
 
 });
